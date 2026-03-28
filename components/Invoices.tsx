@@ -21,6 +21,7 @@ export default function Invoices() {
     phoneNumber: '',
     address: '',
     items: [{ id: '1', itemNumber: '', description: '', rate: 0, quantity: 0 }],
+    advancePayment: 0,
   });
 
   const resetForm = () => {
@@ -29,6 +30,7 @@ export default function Invoices() {
       phoneNumber: '',
       address: '',
       items: [{ id: '1', itemNumber: '', description: '', rate: 0, quantity: 0 }],
+      advancePayment: 0,
     });
     setEditingInvoice(null);
   };
@@ -40,6 +42,7 @@ export default function Invoices() {
       phoneNumber: invoice.phoneNumber,
       address: invoice.address,
       items: invoice.items,
+      advancePayment: invoice.advancePayment || 0,
     });
     setIsOpen(true);
   };
@@ -87,7 +90,9 @@ export default function Invoices() {
       total: Number(item.rate) * Number(item.quantity),
     }));
 
-    const grandTotal = items.reduce((sum, item) => sum + item.total, 0);
+    const subtotal = items.reduce((sum, item) => sum + item.total, 0);
+    const advancePayment = Math.max(0, Number(formData.advancePayment) || 0);
+    const grandTotal = Math.max(0, subtotal - advancePayment);
 
     if (editingInvoice) {
       const updatedInvoice: Invoice = {
@@ -96,6 +101,8 @@ export default function Invoices() {
         phoneNumber: formData.phoneNumber,
         address: formData.address,
         items,
+        subtotal,
+        advancePayment,
         grandTotal,
       };
       updateInvoice(editingInvoice.id, updatedInvoice);
@@ -106,6 +113,8 @@ export default function Invoices() {
         phoneNumber: formData.phoneNumber,
         address: formData.address,
         items,
+        subtotal,
+        advancePayment,
         grandTotal,
         createdAt: new Date(),
       };
@@ -170,6 +179,15 @@ export default function Invoices() {
                   <td>LKR ${item.total.toFixed(2)}</td>
                 </tr>
               `).join('')}
+              <tr class="total-row">
+                <td colspan="4" style="text-align: right;">Subtotal:</td>
+                <td>LKR ${(invoice.subtotal ?? invoice.grandTotal + (invoice.advancePayment || 0)).toFixed(2)}</td>
+              </tr>
+              ${(invoice.advancePayment || 0) > 0 ? `
+              <tr class="total-row">
+                <td colspan="4" style="text-align: right; color: #16a34a;">Advance Payment:</td>
+                <td style="color: #16a34a;">- LKR ${invoice.advancePayment.toFixed(2)}</td>
+              </tr>` : ''}
               <tr class="total-row">
                 <td colspan="4" style="text-align: right;">Grand Total:</td>
                 <td class="grand-total">LKR ${invoice.grandTotal.toFixed(2)}</td>
@@ -242,62 +260,98 @@ export default function Invoices() {
 
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {formData.items.map((item) => (
-                    <div key={item.id} className="flex gap-2 items-end p-3 bg-muted rounded-lg">
-                      <div className="flex-1 space-y-2">
+                    <div key={item.id} className="p-3 bg-muted rounded-lg space-y-2">
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Item Number</label>
                         <Input
                           placeholder="Item Number"
                           value={item.itemNumber}
                           onChange={(e) => handleItemChange(item.id, 'itemNumber', e.target.value)}
                         />
                       </div>
-                      <div className="flex-1 space-y-2">
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Description</label>
                         <Input
                           placeholder="Description"
                           value={item.description}
                           onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
                         />
                       </div>
-                      <div className="w-20 space-y-2">
-                        <Input
-                          placeholder="Rate"
-                          type="number"
-                          step="0.01"
-                          value={item.rate || ''}
-                          onChange={(e) => handleItemChange(item.id, 'rate', e.target.value)}
-                        />
-                      </div>
-                      <div className="w-20 space-y-2">
-                        <Input
-                          placeholder="Qty"
-                          type="number"
-                          value={item.quantity || ''}
-                          onChange={(e) => handleItemChange(item.id, 'quantity', e.target.value)}
-                        />
-                      </div>
-                      <div className="w-24 space-y-2">
-                        <div className="text-right font-semibold text-sm">
-                          LKR {calculateTotal(Number(item.rate) || 0, Number(item.quantity) || 0).toFixed(2)}
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Rate</label>
+                          <Input
+                            placeholder="Rate"
+                            type="number"
+                            step="0.01"
+                            value={item.rate || ''}
+                            onChange={(e) => handleItemChange(item.id, 'rate', e.target.value)}
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Quantity</label>
+                          <Input
+                            placeholder="Qty"
+                            type="number"
+                            value={item.quantity || ''}
+                            onChange={(e) => handleItemChange(item.id, 'quantity', e.target.value)}
+                          />
                         </div>
                       </div>
-                      {formData.items.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveItem(item.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
+                      <div className="flex items-center justify-between pt-1">
+                        <div className="font-semibold text-sm text-foreground">
+                          Total: LKR {calculateTotal(Number(item.rate) || 0, Number(item.quantity) || 0).toFixed(2)}
+                        </div>
+                        {formData.items.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveItem(item.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Grand Total */}
-              <div className="text-right text-lg font-bold text-foreground">
-                Grand Total: LKR {formData.items.reduce((sum, item) => sum + calculateTotal(Number(item.rate) || 0, Number(item.quantity) || 0), 0).toFixed(2)}
+              {/* Advance Payment */}
+              <div className="space-y-2">
+                <h3 className="font-semibold text-foreground">Advance Payment</h3>
+                <Input
+                  placeholder="Advance Payment (Rs.)"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.advancePayment || ''}
+                  onChange={(e) => setFormData({ ...formData, advancePayment: Number(e.target.value) || 0 })}
+                />
               </div>
+
+              {/* Totals Breakdown */}
+              {(() => {
+                const subtotal = formData.items.reduce((sum, item) => sum + calculateTotal(Number(item.rate) || 0, Number(item.quantity) || 0), 0);
+                const advance = Math.max(0, Number(formData.advancePayment) || 0);
+                const grandTotal = Math.max(0, subtotal - advance);
+                return (
+                  <div className="space-y-1 text-right border-t border-border pt-3">
+                    <div className="text-sm text-muted-foreground">
+                      Subtotal: LKR {subtotal.toFixed(2)}
+                    </div>
+                    {advance > 0 && (
+                      <div className="text-sm text-green-500">
+                        Advance Payment: - LKR {advance.toFixed(2)}
+                      </div>
+                    )}
+                    <div className="text-lg font-bold text-foreground">
+                      Grand Total: LKR {grandTotal.toFixed(2)}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Submit */}
               <Button type="submit" className="w-full">
@@ -329,6 +383,9 @@ export default function Invoices() {
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-bold text-foreground">LKR {invoice.grandTotal.toFixed(2)}</div>
+                    {(invoice.advancePayment || 0) > 0 && (
+                      <div className="text-xs text-green-500">Advance: LKR {invoice.advancePayment.toFixed(2)}</div>
+                    )}
                     <div className="text-xs text-muted-foreground">{new Date(invoice.createdAt).toLocaleDateString()}</div>
                   </div>
                 </div>
@@ -370,6 +427,21 @@ export default function Invoices() {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+
+                  {/* Totals Breakdown on Card */}
+                  <div className="flex flex-col items-end gap-1 text-sm">
+                    <div className="text-muted-foreground">
+                      Subtotal: LKR {(invoice.subtotal ?? invoice.grandTotal + (invoice.advancePayment || 0)).toFixed(2)}
+                    </div>
+                    {(invoice.advancePayment || 0) > 0 && (
+                      <div className="text-green-500">
+                        Advance Payment: - LKR {invoice.advancePayment.toFixed(2)}
+                      </div>
+                    )}
+                    <div className="text-base font-bold text-foreground">
+                      Grand Total: LKR {invoice.grandTotal.toFixed(2)}
+                    </div>
                   </div>
 
                   {/* Actions */}

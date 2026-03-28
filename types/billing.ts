@@ -13,6 +13,8 @@ export interface Invoice {
   phoneNumber: string;
   address: string;
   items: InvoiceItem[];
+  subtotal: number;
+  advancePayment: number;
   grandTotal: number;
   createdAt: Date;
 }
