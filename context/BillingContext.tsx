@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Invoice, Customer, InvoiceItem } from '@/types/billing';
+import { Invoice, Customer } from '@/types/billing';
 
 interface BillingContextType {
   invoices: Invoice[];

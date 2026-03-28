@@ -66,7 +66,7 @@ export default function Invoices() {
     });
   };
 
-  const handleItemChange = (id: string, field: string, value: any) => {
+  const handleItemChange = (id: string, field: string, value: string | number) => {
     setFormData({
       ...formData,
       items: formData.items.map(item =>
@@ -248,7 +248,6 @@ export default function Invoices() {
                           placeholder="Item Number"
                           value={item.itemNumber}
                           onChange={(e) => handleItemChange(item.id, 'itemNumber', e.target.value)}
-                          size="small"
                         />
                       </div>
                       <div className="flex-1 space-y-2">
@@ -256,7 +255,6 @@ export default function Invoices() {
                           placeholder="Description"
                           value={item.description}
                           onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
-                          size="small"
                         />
                       </div>
                       <div className="w-20 space-y-2">
@@ -266,7 +264,6 @@ export default function Invoices() {
                           step="0.01"
                           value={item.rate || ''}
                           onChange={(e) => handleItemChange(item.id, 'rate', e.target.value)}
-                          size="small"
                         />
                       </div>
                       <div className="w-20 space-y-2">
@@ -275,7 +272,6 @@ export default function Invoices() {
                           type="number"
                           value={item.quantity || ''}
                           onChange={(e) => handleItemChange(item.id, 'quantity', e.target.value)}
-                          size="small"
                         />
                       </div>
                       <div className="w-24 space-y-2">
