@@ -145,7 +145,7 @@ export default function Invoices() {
               box-sizing: border-box;
             }
             body {
-              font-family: 'Arial', sans-serif;
+              font-family: 'Times New Roman', Times, serif;
               padding: 40px;
               color: #333;
               background-color: #fff;
@@ -335,23 +335,23 @@ export default function Invoices() {
                 <tr>
                   <td>${item.itemNumber}</td>
                   <td>${item.description}</td>
-                  <td class="text-right">LKR ${item.rate.toFixed(2)}</td>
+                  <td class="text-right">${item.rate.toFixed(2)}</td>
                   <td class="text-right">${item.quantity}</td>
-                  <td class="text-right">LKR ${item.total.toFixed(2)}</td>
+                  <td class="text-right">${item.total.toFixed(2)}</td>
                 </tr>
               `).join('')}
               <tr class="total-row">
                 <td colspan="4" class="total-row-label">Subtotal:</td>
-                <td class="total-row-value">LKR ${(invoice.subtotal ?? invoice.grandTotal + (invoice.advancePayment || 0)).toFixed(2)}</td>
+                <td class="total-row-value">${(invoice.subtotal ?? invoice.grandTotal + (invoice.advancePayment || 0)).toFixed(2)}</td>
               </tr>
               ${(invoice.advancePayment || 0) > 0 ? `
               <tr class="total-row">
                 <td colspan="4" class="total-row-label">Advance Payment:</td>
-                <td class="total-row-value">- LKR ${invoice.advancePayment.toFixed(2)}</td>
+                <td class="total-row-value">- ${invoice.advancePayment.toFixed(2)}</td>
               </tr>` : ''}
               <tr class="total-row">
                 <td colspan="4" class="total-row-label">Grand Total:</td>
-                <td class="total-row-value">LKR ${invoice.grandTotal.toFixed(2)}</td>
+                <td class="total-row-value">${invoice.grandTotal.toFixed(2)}</td>
               </tr>
             </tbody>
           </table>
