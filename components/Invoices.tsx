@@ -134,10 +134,6 @@ export default function Invoices() {
     const companyPhone = '+94 76 830 2475';
     const invoiceDate = new Date(invoice.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
-    // Create empty rows for visual balance
-    const totalRows = 5;
-    const emptyRows = Math.max(0, totalRows - invoice.items.length);
-
     const content = `
       <html>
         <head>
@@ -342,15 +338,6 @@ export default function Invoices() {
                   <td class="text-right">LKR ${item.rate.toFixed(2)}</td>
                   <td class="text-right">${item.quantity}</td>
                   <td class="text-right">LKR ${item.total.toFixed(2)}</td>
-                </tr>
-              `).join('')}
-              ${Array(emptyRows).fill(0).map(() => `
-                <tr>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
                 </tr>
               `).join('')}
               <tr class="total-row">

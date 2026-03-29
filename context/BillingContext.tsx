@@ -6,11 +6,12 @@ import { Invoice, Customer } from '@/types/billing';
 interface BillingContextType {
   invoices: Invoice[];
   customers: Customer[];
-  addInvoice: (invoice: Invoice) => void;
-  updateInvoice: (id: string, invoice: Invoice) => void;
-  deleteInvoice: (id: string) => void;
-  deleteCustomer: (id: string) => void;
+  addInvoice: (invoice: Invoice) => Promise<void>;
+  updateInvoice: (id: string, invoice: Invoice) => Promise<void>;
+  deleteInvoice: (id: string) => Promise<void>;
+  deleteCustomer: (id: string) => Promise<void>;
   getInvoiceById: (id: string) => Invoice | undefined;
+  isLoading: boolean;
 }
 
 const BillingContext = createContext<BillingContextType | undefined>(undefined);
@@ -18,73 +19,155 @@ const BillingContext = createContext<BillingContextType | undefined>(undefined);
 export function BillingProvider({ children }: { children: React.ReactNode }) {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load from localStorage on mount
+  // Load data from MongoDB on mount
   useEffect(() => {
-    const savedInvoices = localStorage.getItem('invoices');
-    const savedCustomers = localStorage.getItem('customers');
-    
-    if (savedInvoices) setInvoices(JSON.parse(savedInvoices));
-    if (savedCustomers) setCustomers(JSON.parse(savedCustomers));
+    const fetchData = async () => {
+      try {
+        const [invoicesRes, customersRes] = await Promise.all([
+          fetch('/api/invoices'),
+          fetch('/api/customers'),
+        ]);
+
+        if (invoicesRes.ok) {
+          const invoicesData = await invoicesRes.json();
+          setInvoices(invoicesData.map((inv: any) => ({
+            id: inv._id,
+            customerName: inv.customerName,
+            phoneNumber: inv.phoneNumber,
+            address: inv.address,
+            items: inv.items,
+            subtotal: inv.subtotal,
+            advancePayment: inv.advancePayment,
+            grandTotal: inv.grandTotal,
+            createdAt: new Date(inv.createdAt),
+          })));
+        }
+
+        if (customersRes.ok) {
+          const customersData = await customersRes.json();
+          setCustomers(customersData.map((cust: any) => ({
+            id: cust._id,
+            name: cust.name,
+            phoneNumber: cust.phoneNumber,
+            address: cust.address,
+            invoiceCount: cust.invoiceCount,
+          })));
+        }
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  // Save invoices to localStorage
-  useEffect(() => {
-    localStorage.setItem('invoices', JSON.stringify(invoices));
-  }, [invoices]);
+  const addInvoice = async (invoice: Invoice) => {
+    try {
+      const response = await fetch('/api/invoices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(invoice),
+      });
 
-  // Save customers to localStorage
-  useEffect(() => {
-    localStorage.setItem('customers', JSON.stringify(customers));
-  }, [customers]);
+      if (!response.ok) throw new Error('Failed to add invoice');
 
-  const addInvoice = (invoice: Invoice) => {
-    setInvoices([invoice, ...invoices]);
+      const newInvoice = await response.json();
+      setInvoices([{ ...invoice, id: newInvoice.id }, ...invoices]);
 
-    // Auto-add or update customer
-    const existingCustomer = customers.find(c => c.name === invoice.customerName);
-    
-    if (existingCustomer) {
-      const updatedCustomer: Customer = {
-        ...existingCustomer,
-        invoiceCount: existingCustomer.invoiceCount + 1,
-      };
-      setCustomers([
-        updatedCustomer,
-        ...customers.filter(c => c.name !== invoice.customerName),
-      ]);
-    } else {
-      const newCustomer: Customer = {
-        id: `cust-${Date.now()}`,
-        name: invoice.customerName,
-        phoneNumber: invoice.phoneNumber,
-        address: invoice.address,
-        invoiceCount: 1,
-      };
-      setCustomers([newCustomer, ...customers]);
+      // Auto-add or update customer
+      const existingCustomer = customers.find(c => c.name === invoice.customerName);
+
+      if (existingCustomer) {
+        const updatedCustomer = {
+          ...existingCustomer,
+          invoiceCount: existingCustomer.invoiceCount + 1,
+        };
+        setCustomers([
+          updatedCustomer,
+          ...customers.filter(c => c.name !== invoice.customerName),
+        ]);
+      } else {
+        const newCustomer: Customer = {
+          id: `cust-${Date.now()}`,
+          name: invoice.customerName,
+          phoneNumber: invoice.phoneNumber,
+          address: invoice.address,
+          invoiceCount: 1,
+        };
+        
+        try {
+          await fetch('/api/customers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newCustomer),
+          });
+        } catch (error) {
+          console.error('Failed to create customer:', error);
+        }
+
+        setCustomers([newCustomer, ...customers]);
+      }
+    } catch (error) {
+      console.error('Error adding invoice:', error);
     }
   };
 
-  const updateInvoice = (id: string, updatedInvoice: Invoice) => {
-    setInvoices(invoices.map(i => i.id === id ? updatedInvoice : i));
-  };
+  const updateInvoice = async (id: string, updatedInvoice: Invoice) => {
+    try {
+      const response = await fetch('/api/invoices', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...updatedInvoice }),
+      });
 
-  const deleteInvoice = (id: string) => {
-    const invoice = invoices.find(i => i.id === id);
-    if (invoice) {
-      setInvoices(invoices.filter(i => i.id !== id));
+      if (!response.ok) throw new Error('Failed to update invoice');
 
-      // Decrement customer invoice count
-      setCustomers(customers.map(c =>
-        c.name === invoice.customerName
-          ? { ...c, invoiceCount: Math.max(0, c.invoiceCount - 1) }
-          : c
-      ));
+      setInvoices(invoices.map(inv => inv.id === id ? updatedInvoice : inv));
+    } catch (error) {
+      console.error('Error updating invoice:', error);
     }
   };
 
-  const deleteCustomer = (id: string) => {
-    setCustomers(customers.filter(c => c.id !== id));
+  const deleteInvoice = async (id: string) => {
+    try {
+      const response = await fetch(`/api/invoices?id=${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete invoice');
+
+      const invoice = invoices.find(i => i.id === id);
+      if (invoice) {
+        setInvoices(invoices.filter(i => i.id !== id));
+
+        // Decrement customer invoice count
+        setCustomers(customers.map(c =>
+          c.name === invoice.customerName
+            ? { ...c, invoiceCount: Math.max(0, c.invoiceCount - 1) }
+            : c
+        ));
+      }
+    } catch (error) {
+      console.error('Error deleting invoice:', error);
+    }
+  };
+
+  const deleteCustomer = async (id: string) => {
+    try {
+      const response = await fetch(`/api/customers?id=${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete customer');
+
+      setCustomers(customers.filter(c => c.id !== id));
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+    }
   };
 
   const getInvoiceById = (id: string) => {
@@ -92,7 +175,18 @@ export function BillingProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <BillingContext.Provider value={{ invoices, customers, addInvoice, updateInvoice, deleteInvoice, deleteCustomer, getInvoiceById }}>
+    <BillingContext.Provider
+      value={{
+        invoices,
+        customers,
+        addInvoice,
+        updateInvoice,
+        deleteInvoice,
+        deleteCustomer,
+        getInvoiceById,
+        isLoading,
+      }}
+    >
       {children}
     </BillingContext.Provider>
   );
@@ -100,8 +194,8 @@ export function BillingProvider({ children }: { children: React.ReactNode }) {
 
 export function useBilling() {
   const context = useContext(BillingContext);
-  if (context === undefined) {
-    throw new Error('useBilling must be used within a BillingProvider');
+  if (!context) {
+    throw new Error('useBilling must be used within BillingProvider');
   }
   return context;
 }
