@@ -129,44 +129,209 @@ export default function Invoices() {
     const printWindow = window.open('', '', 'height=600,width=800');
     if (!printWindow) return;
 
+    const companyName = 'Pasindu Mahesh Photography';
+    const companyEmail = 'pasinduzone@gmail.com';
+    const companyPhone = '+94 76 830 2475';
+    const invoiceDate = new Date(invoice.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Create empty rows for visual balance
+    const totalRows = 5;
+    const emptyRows = Math.max(0, totalRows - invoice.items.length);
+
     const content = `
       <html>
         <head>
           <title>Invoice ${invoice.id}</title>
           <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .invoice-header { text-align: center; margin-bottom: 30px; }
-            .invoice-header h1 { margin: 0; color: #1f2937; }
-            .customer-details { margin-bottom: 20px; }
-            .customer-details p { margin: 5px 0; }
-            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-            th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-            th { background-color: #f3f4f6; font-weight: bold; }
-            .total-row { font-weight: bold; background-color: #f3f4f6; }
-            .grand-total { font-size: 18px; color: #1f2937; }
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            body {
+              font-family: 'Arial', sans-serif;
+              padding: 40px;
+              color: #333;
+              background-color: #fff;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              color-adjust: exact !important;
+            }
+            .company-header {
+              background-color: #6e6e6e !important;
+              color: white !important;
+              padding: 30px;
+              text-align: center;
+              margin-bottom: 40px;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              color-adjust: exact !important;
+            }
+            .company-header h1 {
+              font-size: 28px;
+              font-weight: bold;
+              margin-bottom: 10px;
+              letter-spacing: 1px;
+              color: white !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            .company-header p {
+              font-size: 14px;
+              margin: 5px 0;
+              color: white !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            .invoice-title {
+              text-align: center;
+              font-size: 36px;
+              font-weight: bold;
+              margin: 50px 0 10px 0;
+              letter-spacing: 4px;
+              color: #666666 !important;
+              font-family: 'Georgia', serif;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            .invoice-id {
+              text-align: center;
+              font-size: 14px;
+              margin-bottom: 40px;
+              color: #333;
+            }
+            .customer-section {
+              margin-bottom: 30px;
+              margin-left: 0;
+              font-size: 14px;
+            }
+            .customer-row {
+              margin-bottom: 8px;
+            }
+            .customer-label {
+              font-weight: bold;
+              display: inline-block;
+              width: 120px;
+            }
+            .customer-value {
+              display: inline-block;
+            }
+            .items-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 30px 0;
+              font-size: 13px;
+              border: 1px solid #000;
+            }
+            .items-table thead tr {
+              border-bottom: 1px solid #000;
+            }
+            .items-table th {
+              border-right: 1px solid #000;
+              padding: 12px 8px;
+              font-weight: bold;
+              text-align: left;
+              background-color: #ffffff;
+              font-size: 13px;
+              border-bottom: 1px solid #000;
+            }
+            .items-table th:last-child {
+              border-right: none;
+            }
+            .items-table td {
+              border-right: 1px solid #000;
+              padding: 12px 8px;
+              min-height: 20px;
+            }
+            .items-table td:last-child {
+              border-right: none;
+            }
+            .items-table tbody tr {
+              border-bottom: 1px solid #000;
+            }
+            .items-table tbody tr:last-child {
+              border-bottom: 1px solid #000;
+            }
+            .text-right {
+              text-align: right;
+            }
+            .total-row td {
+              border-right: 1px solid #000;
+              padding: 12px 8px;
+              font-weight: normal;
+            }
+            .total-row td:last-child {
+              border-right: none;
+            }
+            .total-row-label {
+              text-align: right;
+              font-weight: normal;
+              color: #000;
+            }
+            .total-row-value {
+              text-align: right;
+              font-weight: normal;
+            }
+            .signature-section {
+              display: flex;
+              justify-content: space-between;
+              margin-top: 80px;
+              font-size: 13px;
+              padding: 0 40px;
+            }
+            .signature-box {
+              text-align: center;
+              width: 35%;
+            }
+            .signature-line {
+              border-top: 1px solid #000;
+              margin-top: 50px;
+              padding-top: 8px;
+              min-width: 150px;
+            }
           </style>
         </head>
         <body>
-          <div class="invoice-header">
-            <h1>Invoice</h1>
-            <p>Invoice ID: ${invoice.id}</p>
-          </div>
-          
-          <div class="customer-details">
-            <p><strong>Customer Name:</strong> ${invoice.customerName}</p>
-            <p><strong>Phone:</strong> ${invoice.phoneNumber}</p>
-            <p><strong>Address:</strong> ${invoice.address}</p>
-            <p><strong>Date:</strong> ${new Date(invoice.createdAt).toLocaleDateString()}</p>
+          <!-- Company Header -->
+          <div class="company-header">
+            <h1>${companyName}</h1>
+            <p>${companyEmail}</p>
+            <p>${companyPhone}</p>
           </div>
 
-          <table>
+          <!-- Invoice Title -->
+          <div class="invoice-title">INVOICE</div>
+          <div class="invoice-id">Invoice ID: ${invoice.id}</div>
+
+          <!-- Customer Details -->
+          <div class="customer-section">
+            <div class="customer-row">
+              <span class="customer-label">Customer Name:</span>
+              <span class="customer-value">${invoice.customerName}</span>
+            </div>
+            <div class="customer-row">
+              <span class="customer-label">Phone:</span>
+              <span class="customer-value">${invoice.phoneNumber}</span>
+            </div>
+            <div class="customer-row">
+              <span class="customer-label">Address:</span>
+              <span class="customer-value">${invoice.address}</span>
+            </div>
+            <div class="customer-row">
+              <span class="customer-label">Date:</span>
+              <span class="customer-value">${invoiceDate}</span>
+            </div>
+          </div>
+
+          <!-- Items Table -->
+          <table class="items-table">
             <thead>
               <tr>
-                <th>Item Number</th>
-                <th>Description</th>
-                <th>Rate</th>
-                <th>Quantity</th>
-                <th>Total</th>
+                <th style="width: 12%;">Item Number</th>
+                <th style="width: 38%;">Description</th>
+                <th style="width: 15%;">Rate</th>
+                <th style="width: 15%;">Qty</th>
+                <th style="width: 20%;">Total</th>
               </tr>
             </thead>
             <tbody>
@@ -174,26 +339,47 @@ export default function Invoices() {
                 <tr>
                   <td>${item.itemNumber}</td>
                   <td>${item.description}</td>
-                  <td>LKR ${item.rate.toFixed(2)}</td>
-                  <td>${item.quantity}</td>
-                  <td>LKR ${item.total.toFixed(2)}</td>
+                  <td class="text-right">LKR ${item.rate.toFixed(2)}</td>
+                  <td class="text-right">${item.quantity}</td>
+                  <td class="text-right">LKR ${item.total.toFixed(2)}</td>
+                </tr>
+              `).join('')}
+              ${Array(emptyRows).fill(0).map(() => `
+                <tr>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
                 </tr>
               `).join('')}
               <tr class="total-row">
-                <td colspan="4" style="text-align: right;">Subtotal:</td>
-                <td>LKR ${(invoice.subtotal ?? invoice.grandTotal + (invoice.advancePayment || 0)).toFixed(2)}</td>
+                <td colspan="4" class="total-row-label">Subtotal:</td>
+                <td class="total-row-value">LKR ${(invoice.subtotal ?? invoice.grandTotal + (invoice.advancePayment || 0)).toFixed(2)}</td>
               </tr>
               ${(invoice.advancePayment || 0) > 0 ? `
               <tr class="total-row">
-                <td colspan="4" style="text-align: right; color: #16a34a;">Advance Payment:</td>
-                <td style="color: #16a34a;">- LKR ${invoice.advancePayment.toFixed(2)}</td>
+                <td colspan="4" class="total-row-label">Advance Payment:</td>
+                <td class="total-row-value">- LKR ${invoice.advancePayment.toFixed(2)}</td>
               </tr>` : ''}
               <tr class="total-row">
-                <td colspan="4" style="text-align: right;">Grand Total:</td>
-                <td class="grand-total">LKR ${invoice.grandTotal.toFixed(2)}</td>
+                <td colspan="4" class="total-row-label">Grand Total:</td>
+                <td class="total-row-value">LKR ${invoice.grandTotal.toFixed(2)}</td>
               </tr>
             </tbody>
           </table>
+
+          <!-- Signature Section -->
+          <div class="signature-section">
+            <div class="signature-box">
+              <div class="signature-line"></div>
+              <div>Prepared By</div>
+            </div>
+            <div class="signature-box">
+              <div class="signature-line"></div>
+              <div>Customer</div>
+            </div>
+          </div>
         </body>
       </html>
     `;
