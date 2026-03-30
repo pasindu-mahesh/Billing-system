@@ -9,6 +9,7 @@ export interface InvoiceItem {
 
 export interface Invoice {
   id: string;
+  invoiceNumber: string;
   customerName: string;
   phoneNumber: string;
   address: string;

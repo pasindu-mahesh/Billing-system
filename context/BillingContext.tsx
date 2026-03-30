@@ -32,17 +32,20 @@ export function BillingProvider({ children }: { children: React.ReactNode }) {
 
         if (invoicesRes.ok) {
           const invoicesData = await invoicesRes.json();
-          setInvoices(invoicesData.map((inv: any) => ({
-            id: inv._id,
-            customerName: inv.customerName,
-            phoneNumber: inv.phoneNumber,
-            address: inv.address,
-            items: inv.items,
-            subtotal: inv.subtotal,
-            advancePayment: inv.advancePayment,
-            grandTotal: inv.grandTotal,
-            createdAt: new Date(inv.createdAt),
-          })));
+          setInvoices(invoicesData.map((inv: any) => (
+            {
+              id: inv._id?.toString?.() || inv._id || inv.id || '',
+              invoiceNumber: inv.invoiceNumber,
+              customerName: inv.customerName,
+              phoneNumber: inv.phoneNumber,
+              address: inv.address,
+              items: inv.items,
+              subtotal: inv.subtotal,
+              advancePayment: inv.advancePayment,
+              grandTotal: inv.grandTotal,
+              createdAt: new Date(inv.createdAt),
+            }
+          )));
         }
 
         if (customersRes.ok) {
@@ -76,7 +79,7 @@ export function BillingProvider({ children }: { children: React.ReactNode }) {
       if (!response.ok) throw new Error('Failed to add invoice');
 
       const newInvoice = await response.json();
-      setInvoices([{ ...invoice, id: newInvoice.id }, ...invoices]);
+      setInvoices([{ ...invoice, id: newInvoice.id, invoiceNumber: newInvoice.invoiceNumber, createdAt: new Date(newInvoice.createdAt) }, ...invoices]);
 
       // Auto-add or update customer
       const existingCustomer = customers.find(c => c.name === invoice.customerName);

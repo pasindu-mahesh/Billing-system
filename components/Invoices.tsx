@@ -15,6 +15,7 @@ export default function Invoices() {
   const [isOpen, setIsOpen] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [formData, setFormData] = useState({
     customerName: '',
@@ -80,6 +81,10 @@ export default function Invoices() {
 
   const calculateTotal = (rate: number, quantity: number) => rate * quantity;
 
+  const filteredInvoices = invoices.filter(inv => 
+    searchTerm === '' || String(inv.invoiceNumber).toLowerCase().includes(searchTerm.toLowerCase()) || inv.customerName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -108,7 +113,8 @@ export default function Invoices() {
       updateInvoice(editingInvoice.id, updatedInvoice);
     } else {
       const newInvoice: Invoice = {
-        id: `inv-${Date.now()}`,
+        id: '',
+        invoiceNumber: '',
         customerName: formData.customerName,
         phoneNumber: formData.phoneNumber,
         address: formData.address,
@@ -137,7 +143,7 @@ export default function Invoices() {
     const content = `
       <html>
         <head>
-          <title>Invoice ${invoice.id}</title>
+          <title>Invoice ${invoice.invoiceNumber}</title>
           <style>
             * {
               margin: 0;
@@ -297,7 +303,7 @@ export default function Invoices() {
 
           <!-- Invoice Title -->
           <div class="invoice-title">INVOICE</div>
-          <div class="invoice-id">Invoice ID: ${invoice.id}</div>
+          <div class="invoice-id">Invoice ${invoice.invoiceNumber}</div>
 
           <!-- Customer Details -->
           <div class="customer-section">
@@ -535,24 +541,34 @@ export default function Invoices() {
         </Dialog>
       </div>
 
+      {/* Search Bar */}
+      <div className="flex items-center gap-2">
+        <Input
+          placeholder="Search by invoice number or customer name..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-md"
+        />
+      </div>
+
       {/* Invoices List */}
       <div className="space-y-4">
-        {invoices.length === 0 ? (
+        {filteredInvoices.length === 0 ? (
           <Card>
             <CardContent className="py-12">
               <div className="text-center text-muted-foreground">
-                <p>No invoices yet. Create one to get started.</p>
+                <p>{searchTerm ? 'No invoices match your search.' : 'No invoices yet. Create one to get started.'}</p>
               </div>
             </CardContent>
           </Card>
         ) : (
-          invoices.map((invoice) => (
-            <Card key={invoice.id} className="overflow-hidden">
+          filteredInvoices.map((invoice) => (
+            <Card key={invoice.invoiceNumber} className="overflow-hidden">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
                     <CardTitle>{invoice.customerName}</CardTitle>
-                    <CardDescription>Invoice ID: {invoice.id}</CardDescription>
+                    <CardDescription>{invoice.invoiceNumber}</CardDescription>
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-bold text-foreground">LKR {invoice.grandTotal.toFixed(2)}</div>
