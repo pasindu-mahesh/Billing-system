@@ -356,7 +356,7 @@ export default function Invoices() {
                 <td class="total-row-value">- ${invoice.advancePayment.toFixed(2)}</td>
               </tr>` : ''}
               <tr class="total-row">
-                <td colspan="4" class="total-row-label">Grand Total:</td>
+                <td colspan="4" class="total-row-label">Invoice Amount:</td>
                 <td class="total-row-value">${invoice.grandTotal.toFixed(2)}</td>
               </tr>
             </tbody>
