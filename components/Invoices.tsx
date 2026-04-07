@@ -136,7 +136,7 @@ export default function Invoices() {
     if (!printWindow) return;
 
     const companyName = 'Pasindu Mahesh Photography';
-    const companyEmail = 'pasinduzone@gmail.com';
+    const companyEmail = 'pasinduzone.m@gmail.com';
     const companyPhone = '+94 76 830 2475';
     const invoiceDate = new Date(invoice.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
